@@ -10,13 +10,35 @@
 int
 sys_clone(void)
 {
-  return clone();
+  void *func;
+  void *stack;
+  void *arg1;
+  void *arg2;
+
+  // grab args
+  if (argptr(0, (void*)&func,sizeof(*func)) < 0){
+    return -1;
+  } 
+  if (argptr(0, (void*)&stack,sizeof(*stack)) < 0){
+    return -1;
+  } 
+  if (argptr(0, (void*)&arg1,sizeof(*arg1)) < 0){
+    return -1;
+  } 
+  if (argptr(0, (void*)&arg2,sizeof(*arg2)) < 0){
+    return -1;
+  } 
+  return clone(func,arg1,arg2,stack);
 }
 
 int
 sys_join(void)
 {
-  return join();
+  void **stack;
+  if (argptr(0, (void*)&stack,sizeof(*stack)) < 0){
+    return -1;
+  } 
+  return join(stack);
 }
 
 int
@@ -92,7 +114,9 @@ sys_sleep(void)
 // return how many clock tick interrupts have occurred
 // since start.
 int
-sys_uptime(void)lib.c.
+sys_uptime(void){
+  
+  uint xticks;
   acquire(&tickslock);
   xticks = ticks;
   release(&tickslock);
