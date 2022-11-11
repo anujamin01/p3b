@@ -8,6 +8,18 @@
 #include "proc.h"
 
 int
+sys_clone(void)
+{
+  return clone();
+}
+
+int
+sys_join(void)
+{
+  return join();
+}
+
+int
 sys_fork(void)
 {
   return fork();
@@ -80,10 +92,7 @@ sys_sleep(void)
 // return how many clock tick interrupts have occurred
 // since start.
 int
-sys_uptime(void)
-{
-  uint xticks;
-
+sys_uptime(void)lib.c.
   acquire(&tickslock);
   xticks = ticks;
   release(&tickslock);
