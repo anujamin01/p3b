@@ -21,15 +21,9 @@ extern void trapret(void);
 static void wakeup1(void *chan);
 
 int 
-clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
-{
-  
-}
-
-int 
 join(void **stack)
 {
-
+  return 0;
 }
 
 void
@@ -543,4 +537,54 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int 
+clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
+{
+  int i, pid;
+  struct proc *nt; // new thread
+  struct proc *curproc = myproc();
+
+  // Allocate process.
+  if((nt = allocproc()) == 0){
+    return -1;
+  }
+
+  // copy thread with same pdgir
+  if((nt->pgdir = curproc->pgdir) == 0){
+    kfree(nt->kstack);
+    nt->kstack = 0;
+    nt->state = UNUSED;
+    return -1;
+  }
+
+  // most things same as other thread except stack and tf
+  nt->sz = curproc->sz;
+  nt->parent = curproc;
+  //*nt->tf = *curproc->tf; for tf, allocate more mem?
+
+  nt->tf->eax = 0;
+  nt->tf->esp = (int)stack;
+  nt->tf->eip = (int)(fcn);
+
+  // copy the file descriptor
+  for(i = 0; i < NOFILE; i++)
+    if(curproc->ofile[i])
+      nt->ofile[i] = filedup(curproc->ofile[i]);
+  nt->cwd = idup(curproc->cwd);
+
+  safestrcpy(nt->name, curproc->name, sizeof(curproc->name));
+
+  pid = nt->pid;
+
+  acquire(&ptable.lock);
+
+  nt->state = RUNNABLE;
+
+  release(&ptable.lock);
+
+  exit(); // maybe here
+
+  return pid;
 }

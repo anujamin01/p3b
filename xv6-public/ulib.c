@@ -7,13 +7,13 @@
 int 
 thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
 {
-
+  return 1;
 }
 
 int 
 thread_join()
 {
-
+  return 1;
 }
 
 char*

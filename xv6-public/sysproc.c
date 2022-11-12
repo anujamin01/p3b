@@ -28,7 +28,7 @@ sys_clone(void)
   if (argptr(0, (void*)&arg2,sizeof(*arg2)) < 0){
     return -1;
   } 
-  return clone(func,arg1,arg2,stack);
+  return 0; //clone(func,arg1,arg2,stack);
 }
 
 int
@@ -38,7 +38,7 @@ sys_join(void)
   if (argptr(0, (void*)&stack,sizeof(*stack)) < 0){
     return -1;
   } 
-  return join(stack);
+  return 0; //join(stack);
 }
 
 int
