@@ -4,10 +4,26 @@
 #include "user.h"
 #include "x86.h"
 
+int PGSIZE = 4096; // global page size constant 4kb
+
+// array of stack addresses and where they've been malloced
+int i = 0;
+void *stack_addrs[64]; 
+void *malloc_addrs[64];
+
 int 
 thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
 {
-
+  void *stack = malloc(PGSIZE * 2);
+  // if page aligned
+  if ((int)stack % PGSIZE == 0){
+    stack+=PGSIZE;
+  } else{// else not page aligned
+    // page align the stack!
+    stack+= PGSIZE - ((int)stack % PGSIZE);
+  }
+  stack_addrs[i++] = stack;
+  return clone(start_routine,arg1,arg2,stack);
 }
 
 int 
