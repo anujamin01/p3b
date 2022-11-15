@@ -4,16 +4,51 @@
 #include "user.h"
 #include "x86.h"
 
+int PGSIZE = 4096; // global page size constant 4kb
+
+// array of stack addresses and where they've been malloced
+void *stack_addrs[64]; 
+void *malloc_addrs[64];
+int inUse[64]; // 1 if joined 0 if not (ie thread is created)
 int 
 thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
 {
-  return 1;
+  for(int i = 0; i < 64; i++){
+    if (inUse[i] == 0){
+      void *stack = malloc(PGSIZE * 2);
+      malloc_addrs[i] = &stack;
+      // if page aligned
+      if ((int)stack % PGSIZE == 0){
+        stack+=PGSIZE;
+      } else{// else not page aligned
+        // page align the stack!
+        stack+= PGSIZE - ((int)stack % PGSIZE);
+      }
+      stack_addrs[i] = stack;
+      break;
+    }
+  } 
+  return clone(start_routine,arg1,arg2,stack);
 }
 
 int 
 thread_join()
 {
-  return 1;
+  // TODO: implement join ie free the stack
+  for(int i = 0; i < 64; i++){
+    if (inUse[i] == 1){
+      void *stack = malloc(PGSIZE * 2);
+      malloc_addrs[i] = &stack;
+      // if page aligned
+      if ((int)stack % PGSIZE == 0){
+        stack+=PGSIZE;
+      } else{// else not page aligned
+        // page align the stack!
+        stack+= PGSIZE - ((int)stack % PGSIZE);
+      }
+      stack_addrs[i] = stack;
+    }
+  }
 }
 
 char*

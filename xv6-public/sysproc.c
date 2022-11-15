@@ -19,16 +19,16 @@ sys_clone(void)
   if (argptr(0, (void*)&func,sizeof(*func)) < 0){
     return -1;
   } 
-  if (argptr(0, (void*)&stack,sizeof(*stack)) < 0){
+  if (argptr(1, (void*)&stack,sizeof(*stack)) < 0){
     return -1;
   } 
-  if (argptr(0, (void*)&arg1,sizeof(*arg1)) < 0){
+  if (argptr(2, (void*)&arg1,sizeof(*arg1)) < 0){
     return -1;
   } 
-  if (argptr(0, (void*)&arg2,sizeof(*arg2)) < 0){
+  if (argptr(3, (void*)&arg2,sizeof(*arg2)) < 0){
     return -1;
   } 
-  return 0; //clone(func,arg1,arg2,stack);
+  return clone(func,arg1,arg2,stack);
 }
 
 int
