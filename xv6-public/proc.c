@@ -566,6 +566,9 @@ clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
 
   nt->tf->eax = 0;
   nt->tf->esp = (int)stack;
+  memmove(stack-4, arg1, sizeof(arg1));
+  memmove(stack-8, arg2, sizeof(arg2));
+  memmove(stack-12, stack, sizeof(stack));
   nt->tf->eip = (int)(fcn);
 
   // copy the file descriptor
@@ -584,7 +587,27 @@ clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
 
   release(&ptable.lock);
 
-  exit(); // maybe here
+  //exit(); // maybe here
 
   return pid;
 }
+
+/*
+int
+join(void **stack)
+{
+  struct proc *p;
+  int havekids, pid;
+  struct proc *curproc = myproc();
+
+  acquire(&ptable.lock);
+  for(;;){
+    havekids = 0;
+    p->pgdir = curproc->pgdir;
+    p->sz = curproc->sz;
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  }
+  return -1;
+}
+*/

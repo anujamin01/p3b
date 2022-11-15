@@ -39,7 +39,7 @@ thread_join()
   for(int i = 0; i < 64; i++){
     if (inUse[i] == 1){ // if joined freer the stack 
       free(malloc_addrs[i]);
-      stack_addrs[i] = NULL;
+      //stack_addrs[i] = NULL;
       inUse[i] = 0;
       return 0;
     }
