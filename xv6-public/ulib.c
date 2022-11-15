@@ -16,7 +16,7 @@ thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
   for(int i = 0; i < 64; i++){
     if (inUse[i] == 0){
       void *stack = malloc(PGSIZE * 2);
-      malloc_addrs[i] = &stack;
+      malloc_addrs[i] = stack;
       // if page aligned
       if ((int)stack % PGSIZE == 0){
         stack+=PGSIZE;
@@ -25,10 +25,11 @@ thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
         stack+= PGSIZE - ((int)stack % PGSIZE);
       }
       stack_addrs[i] = stack;
-      break;
+      return clone(start_routine,arg1,arg2,stack);
+      //break;
     }
   } 
-  return clone(start_routine,arg1,arg2,stack);
+  return -1;
 }
 
 int 
@@ -36,19 +37,14 @@ thread_join()
 {
   // TODO: implement join ie free the stack
   for(int i = 0; i < 64; i++){
-    if (inUse[i] == 1){
-      void *stack = malloc(PGSIZE * 2);
-      malloc_addrs[i] = &stack;
-      // if page aligned
-      if ((int)stack % PGSIZE == 0){
-        stack+=PGSIZE;
-      } else{// else not page aligned
-        // page align the stack!
-        stack+= PGSIZE - ((int)stack % PGSIZE);
-      }
-      stack_addrs[i] = stack;
+    if (inUse[i] == 1){ // if joined freer the stack 
+      free(malloc_addrs[i]);
+      stack_addrs[i] = NULL;
+      inUse[i] = 0;
+      return 0;
     }
   }
+  return -1; 
 }
 
 char*
