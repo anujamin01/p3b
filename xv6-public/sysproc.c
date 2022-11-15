@@ -38,7 +38,7 @@ sys_join(void)
   if (argptr(0, (void*)&stack,sizeof(*stack)) < 0){
     return -1;
   } 
-  return 0; //join(stack);
+  return join(stack);
 }
 
 int
