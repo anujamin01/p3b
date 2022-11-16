@@ -551,24 +551,18 @@ clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
     return -1;
   }
 
-  // copy thread with same pdgir
-  if((nt->pgdir = curproc->pgdir) == 0){
-    kfree(nt->kstack);
-    nt->kstack = 0;
-    nt->state = UNUSED;
-    return -1;
-  }
+  nt->pgdir = curproc->pgdir;
 
-  // most things same as other thread except stack and tf
   nt->sz = curproc->sz;
   nt->parent = curproc;
-  //*nt->tf = *curproc->tf; for tf, allocate more mem?
+  *nt->tf = *curproc->tf;
 
   nt->tf->eax = 0;
   nt->tf->esp = (int)stack;
   memmove(stack-4, arg1, sizeof(arg1));
   memmove(stack-8, arg2, sizeof(arg2));
-  memmove(stack-12, stack, sizeof(stack));
+  memmove(stack-12, (void*)0xffffffff, sizeof(0xffffffff));
+  memmove(stack-16, stack, sizeof(stack));
   nt->tf->eip = (int)(fcn);
 
   // copy the file descriptor
@@ -586,8 +580,6 @@ clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
   nt->state = RUNNABLE;
 
   release(&ptable.lock);
-
-  //exit(); // maybe here
 
   return pid;
 }
