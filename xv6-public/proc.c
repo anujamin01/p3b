@@ -20,11 +20,7 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
-int 
-join(void **stack)
-{
-  return 0;
-}
+
 
 void
 pinit(void)
@@ -164,7 +160,7 @@ userinit(void)
 int
 growproc(int n)
 {
-  uint sz;
+  uint sz;//denotes the top of the virtual address space.
   struct proc *curproc = myproc();
 
   sz = curproc->sz;
@@ -176,6 +172,11 @@ growproc(int n)
       return -1;
   }
   curproc->sz = sz;
+
+  struct proc *p; //why no lock acquire
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p != curproc && p->pgdir == curproc->pgdir) p->sz = sz;
+  }
   switchuvm(curproc);
   return 0;
 }
@@ -287,7 +288,7 @@ wait(void)
     // Scan through table looking for exited children.
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->parent != curproc)
+      if(p->parent != curproc || p->pgdir == curproc->pgdir)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
@@ -542,28 +543,40 @@ procdump(void)
 int 
 clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
 {
+  
+  // check if not aligned
+
+
   int i, pid;
   struct proc *nt; // new thread
   struct proc *curproc = myproc();
-
+  void * ret = (void*)0xffffffff;
   // Allocate process.
+  if ((int)stack < 0 || (uint)stack > curproc->sz){
+    cprintf("Adam you fucking dumbass\n");
+    return -1;
+  }
+
   if((nt = allocproc()) == 0){
     return -1;
   }
 
-  nt->pgdir = curproc->pgdir;
 
+  nt->pgdir = curproc->pgdir;
   nt->sz = curproc->sz;
   nt->parent = curproc;
   *nt->tf = *curproc->tf;
 
   nt->tf->eax = 0;
-  nt->tf->esp = (int)stack;
-  memmove(stack-4, arg1, sizeof(arg1));
-  memmove(stack-8, arg2, sizeof(arg2));
-  memmove(stack-12, (void*)0xffffffff, sizeof(0xffffffff));
-  memmove(stack-16, stack, sizeof(stack));
+  memmove(stack + PGSIZE - 4, &arg2, sizeof(arg2));
+  memmove(stack + PGSIZE - 8, &arg1, sizeof(arg1));
+  memmove(stack + PGSIZE - 12, &ret, sizeof(0xffffffff));
+
   nt->tf->eip = (int)(fcn);
+  nt->tf->ebp = (int)stack + PGSIZE - 12;
+  nt->tf->esp = (int)stack + PGSIZE - 12;
+  nt->stack = stack;
+
 
   // copy the file descriptor
   for(i = 0; i < NOFILE; i++)
@@ -575,14 +588,61 @@ clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
 
   pid = nt->pid;
 
-  acquire(&ptable.lock);
-
   nt->state = RUNNABLE;
-
-  release(&ptable.lock);
 
   return pid;
 }
+
+// Wait for a child process to exit and return its pid.
+// Return -1 if this process has no children.
+int
+join(void **stack)
+{
+  struct proc *p;
+  int havekids, pid;
+  struct proc *curproc = myproc();
+  
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != curproc || p->pgdir != curproc->pgdir)
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        //freevm(p->pgdir);
+        *stack = p->stack;
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || curproc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+  }
+}
+
+
+
+
+
+
 
 /*
 int
