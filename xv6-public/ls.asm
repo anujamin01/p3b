@@ -343,10 +343,10 @@ main(int argc, char *argv[])
  33b:	e9 c0 fe ff ff       	jmp    200 <ls+0x100>
 
 00000340 <thread_create>:
-void *stack_addrs[64]; 
 void *malloc_addrs[64];
 int inUse[64]; // 1 if joined 0 if not (ie thread is created)
-int 
+
+int
 thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
 {
  340:	55                   	push   %ebp

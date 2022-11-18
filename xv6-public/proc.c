@@ -543,24 +543,19 @@ procdump(void)
 int 
 clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
 {
-  
-  // check if not aligned
-
-
   int i, pid;
   struct proc *nt; // new thread
   struct proc *curproc = myproc();
   void * ret = (void*)0xffffffff;
+
   // Allocate process.
   if ((int)stack < 0 || (uint)stack > curproc->sz){
-    cprintf("Adam you fucking dumbass\n");
     return -1;
   }
 
   if((nt = allocproc()) == 0){
     return -1;
   }
-
 
   nt->pgdir = curproc->pgdir;
   nt->sz = curproc->sz;
@@ -593,8 +588,8 @@ clone(void(*fcn)(void *, void *), void *arg1, void *arg2, void *stack)
   return pid;
 }
 
-// Wait for a child process to exit and return its pid.
-// Return -1 if this process has no children.
+// Wait for a child thread to exit and return its pid.
+// Return -1 if this thread has no children.
 int
 join(void **stack)
 {
@@ -615,7 +610,6 @@ join(void **stack)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        //freevm(p->pgdir);
         *stack = p->stack;
         p->pid = 0;
         p->parent = 0;
@@ -637,29 +631,3 @@ join(void **stack)
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
 }
-
-
-
-
-
-
-
-/*
-int
-join(void **stack)
-{
-  struct proc *p;
-  int havekids, pid;
-  struct proc *curproc = myproc();
-
-  acquire(&ptable.lock);
-  for(;;){
-    havekids = 0;
-    p->pgdir = curproc->pgdir;
-    p->sz = curproc->sz;
-
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-  }
-  return -1;
-}
-*/

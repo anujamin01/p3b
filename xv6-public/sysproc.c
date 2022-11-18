@@ -15,7 +15,6 @@ sys_clone(void)
   void *stack;
   void *arg1;
   void *arg2;
-  cprintf("Calling clone. \n");
 
   // grab args
   if (argptr(0, (void*)&func,sizeof(void*)) < 0){
@@ -31,12 +30,10 @@ sys_clone(void)
     return -1;
   } 
 
-  cprintf("Stack address: %d\n", (int)stack);
   if((uint)stack % PGSIZE != 0){
-    cprintf("Failing page-alignment test.\n");
     return -1;
   } //Maintain page alignment
-  return clone((*func),arg1,arg2,stack); // implicit declaration of function ‘clone’
+  return clone((*func),arg1,arg2,stack);
 }
 
 int
@@ -46,7 +43,7 @@ sys_join(void)
   if (argptr(0, (void*)&stack,sizeof(*stack)) < 0){
     return -1;
   } 
-  return join(stack); // implicit declaration of function join
+  return join(stack);
 }
 
 int

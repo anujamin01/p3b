@@ -62,10 +62,10 @@ main(int argc, char **argv)
   5f:	90                   	nop
 
 00000060 <thread_create>:
-void *stack_addrs[64]; 
 void *malloc_addrs[64];
 int inUse[64]; // 1 if joined 0 if not (ie thread is created)
-int 
+
+int
 thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
 {
   60:	55                   	push   %ebp

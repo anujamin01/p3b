@@ -33,10 +33,10 @@ main(void)
   2e:	66 90                	xchg   %ax,%ax
 
 00000030 <thread_create>:
-void *stack_addrs[64]; 
 void *malloc_addrs[64];
 int inUse[64]; // 1 if joined 0 if not (ie thread is created)
-int 
+
+int
 thread_create(void (*start_routine)(void *, void *), void *arg1, void *arg2)
 {
   30:	55                   	push   %ebp
